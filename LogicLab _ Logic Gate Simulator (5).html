@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111c35">
+<title>LogicLab | Logic Gate Simulator</title>
+<style>
+*{box-sizing:border-box}
+:root{font-family:Arial,Helvetica,sans-serif;color:#172033;background:#f1f5f9;color-scheme:light;padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;line-height:1.5;background:#f1f5f9}
+header{background:#111c35;color:#fff;text-align:center;padding:24px 16px;padding-top:calc(24px + env(safe-area-inset-top,0px))}
+.logo{color:#67e8f9;font-size:28px;font-weight:bold}
+header p{color:#cbd5e1;margin-bottom:0}
+main{width:min(850px,100%);margin:28px auto;padding:0 16px}
+.intro{text-align:center;margin-bottom:24px}
+.intro h1{font-size:clamp(25px,5vw,34px);margin-bottom:8px}
+.intro p,.hint{color:#64748b}
+.panel{background:#fff;border-radius:16px;padding:22px;margin-bottom:22px;box-shadow:0 5px 20px #0f172a0d}
+label{display:block;font-weight:bold;margin-bottom:9px}
+select{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#172033;font-size:16px}
+.gate-heading{text-align:center;margin:22px 0}
+.gate-heading h2{margin-bottom:6px;color:#1d4ed8}
+.gate-heading p{color:#64748b}
+.inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.input-card{display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px 8px;border-radius:12px;background:#f8fafc}
+.input-card span,.output-card>span{font-size:12px;font-weight:bold;letter-spacing:1px;color:#64748b}
+.input-card strong{font-size:36px}
+button{padding:11px 15px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-weight:bold;font-size:14px;cursor:pointer}
+button:hover{background:#1d4ed8}
+button:focus-visible,select:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
+button:disabled{opacity:.5;cursor:not-allowed}
+.circuit-panel{margin-top:28px;text-align:center}
+.circuit-panel h2{font-size:21px}
+.circuit-wrap{background:#f8fafc;border:1px solid #dbeafe;border-radius:12px;padding:12px 4px;overflow:hidden}
+#circuitDiagram{display:block;width:100%;max-width:520px;margin:auto}
+#circuitDiagram .wire{stroke:#475569;stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+#circuitDiagram .gate-shape{stroke:#2563eb;stroke-width:2.5;fill:#dbeafe;stroke-linejoin:round}
+#circuitDiagram .bubble{stroke:#2563eb;stroke-width:2.5;fill:#fff}
+#circuitDiagram .wire-label{font:12px Arial,sans-serif;fill:#172033}
+#circuitDiagram .output-number{font:bold 13px Arial,sans-serif;fill:#fff;text-anchor:middle}
+.equation-card{text-align:center;margin-top:18px;padding:20px 12px;border-radius:12px;background:#eff6ff}
+.equation-card>span{color:#1d4ed8;font-size:12px;font-weight:bold;letter-spacing:1px}
+#booleanEquation{margin:12px 0;color:#1d4ed8;font-family:Georgia,serif;font-size:clamp(23px,5vw,30px);font-weight:bold;overflow-wrap:anywhere}
+#equationMeaning{color:#475569;font-size:14px}
+.output-card{text-align:center;margin-top:20px;padding:22px;background:#f8fafc;border-radius:12px}
+.output-light{display:grid;place-items:center;width:76px;height:76px;margin:15px auto;border-radius:50%;background:#cbd5e1;color:#334155;transition:background .2s,box-shadow .2s}
+.output-light strong{font-size:29px}
+.output-light.on{background:#16a34a;color:#fff;box-shadow:0 0 22px #22c55e80}
+#outputStatus{margin:8px}
+#outputExpression{font-family:monospace;overflow-wrap:anywhere}
+.reset-button{width:100%;margin-top:18px;background:#334155}
+.reset-button:hover{background:#1e293b}
+.section-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.section-heading h2{margin:0}
+#tableGate{color:#2563eb;font-size:13px;font-weight:bold}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin-top:16px}
+th,td{padding:14px 8px;border-bottom:1px solid #e2e8f0;text-align:center}
+th{background:#eff6ff;color:#1d4ed8}
+tr.current-row td{background:#dcfce7;font-weight:bold}
+li{margin:8px 0}
+footer{text-align:center;padding:20px;color:#64748b}
+[hidden]{display:none!important}
+@media(max-width:480px){main{padding:0 12px}.panel{padding:16px}.input-card{padding:16px 5px}.input-card button{padding:10px 8px}th,td{padding:12px 5px;font-size:14px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">⚡ LogicLab</div>
+  <p>Interactive Digital Logic Gate Simulator</p>
+</header>
+
+<main>
+  <section class="intro">
+    <h1>Explore Digital Logic</h1>
+    <p>Change binary inputs and see the circuit, equation and output update instantly.</p>
+  </section>
+
+  <section class="panel">
+    <label for="gateSelect">Select Logic Gate</label>
+    <select id="gateSelect">
+      <option value="AND">AND Gate</option>
+      <option value="OR">OR Gate</option>
+      <option value="NOT">NOT Gate</option>
+      <option value="NAND">NAND Gate</option>
+      <option value="NOR">NOR Gate</option>
+      <option value="XOR">XOR Gate</option>
+      <option value="XNOR">XNOR Gate</option>
+    </select>
+
+    <div class="gate-heading">
+      <h2 id="gateTitle">AND Gate</h2>
+      <p id="gateDescription">Output is 1 only when both inputs are 1.</p>
+    </div>
+
+    <div class="inputs">
+      <div class="input-card">
+        <span>INPUT A</span>
+        <strong id="valueA">0</strong>
+        <button id="toggleA" type="button">Set A = 1</button>
+      </div>
+      <div class="input-card" id="inputBCard">
+        <span>INPUT B</span>
+        <strong id="valueB">0</strong>
+        <button id="toggleB" type="button">Set B = 1</button>
+      </div>
+    </div>
+
+    <div class="circuit-panel">
+      <h2>Logic Circuit Diagram</h2>
+      <div class="circuit-wrap">
+        <svg id="circuitDiagram" viewBox="0 0 340 170" role="img" aria-label="Logic gate circuit diagram"></svg>
+      </div>
+      <p class="hint">The diagram updates when you change the gate or inputs.</p>
+    </div>
+
+    <div class="equation-card">
+      <span>BOOLEAN EQUATION</span>
+      <div id="booleanEquation">Y = A · B</div>
+      <p id="equationMeaning">Both inputs must be 1.</p>
+    </div>
+
+    <div class="output-card">
+      <span>OUTPUT Y</span>
+      <div class="output-light" id="outputLight"><strong id="outputValue">0</strong></div>
+      <h2 id="outputStatus">LOW (0)</h2>
+      <p id="outputExpression">Y = A · B</p>
+    </div>
+
+    <button id="resetButton" class="reset-button" type="button">↻ Reset Inputs</button>
+  </section>
+
+  <section class="panel">
+    <div class="section-heading">
+      <h2>Truth Table</h2>
+      <span id="tableGate">AND Gate</span>
+    </div>
+    <p class="hint">The highlighted row represents the current input combination.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Input A</th><th>Input B</th><th>Output Y</th></tr></thead>
+        <tbody id="truthTable"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>About This Project</h2>
+    <p>The Interactive Logic Gate Simulator demonstrates seven fundamental digital logic gates. Users can change binary inputs, observe the circuit diagram, understand Boolean equations, and study truth tables.</p>
+    <h3>Applications</h3>
+    <ul>
+      <li>Digital electronics learning</li>
+      <li>Boolean algebra practice</li>
+      <li>Computer engineering laboratory demonstrations</li>
+      <li>Introduction to digital circuit design</li>
+    </ul>
+  </section>
+</main>
+
+<footer><p>LogicLab | Digital Electronics Project</p></footer>
+
+<script>
+"use strict";
+
+const gateSelect = document.getElementById("gateSelect");
+const valueA = document.getElementById("valueA");
+const valueB = document.getElementById("valueB");
+const toggleA = document.getElementById("toggleA");
+const toggleB = document.getElementById("toggleB");
+const inputBCard = document.getElementById("inputBCard");
+const gateTitle = document.getElementById("gateTitle");
+const gateDescription = document.getElementById("gateDescription");
+const circuitDiagram = document.getElementById("circuitDiagram");
+const booleanEquation = document.getElementById("booleanEquation");
+const equationMeaning = document.getElementById("equationMeaning");
+const outputValue = document.getElementById("outputValue");
+const outputLight = document.getElementById("outputLight");
+const outputStatus = document.getElementById("outputStatus");
+const outputExpression = document.getElementById("outputExpression");
+const truthTable = document.getElementById("truthTable");
+const tableGate = document.getElementById("tableGate");
+const resetButton = document.getElementById("resetButton");
+
+let A = 0;
+let B = 0;
+
+const gates = {
+  AND: { equation: "Y = A · B", description: "Output is 1 only when both inputs are 1." },
+  OR: { equation: "Y = A + B", description: "Output is 1 when at least one input is 1." },
+  NOT: { equation: "Y = A̅", description: "Output is the opposite of input A." },
+  NAND: { equation: "Y = ((A · B))̅", description: "Output is 0 only when both inputs are 1." },
+  NOR: { equation: "Y = ((A + B))̅", description: "Output is 1 only when both inputs are 0." },
+  XOR: { equation: "Y = A ⊕ B", description: "Output is 1 when the inputs are different." },
+  XNOR: { equation: "Y = ((A ⊕ B))̅", description: "Output is 1 when the inputs are equal." }
+};
+
+function calculateOutput(gate, a, b) {
+  switch (gate) {
+    case "AND": return a & b;
+    case "OR": return a | b;
+    case "NOT": return 1 - a;
+    case "NAND": return 1 - (a & b);
+    case "NOR": return 1 - (a | b);
+    case "XOR": return a ^ b;
+    case "XNOR": return 1 - (a ^ b);
+    default: return 0;
+  }
+}
+
+function drawCircuit(gate, output) {
+  let shape = "";
+  let wires = "";
+  let labels = "";
+  let outputStart = 205;
+
+  if (gate === "NOT") {
+    shape = `
+      <path class="gate-shape" d="M110 43 L110 117 L184 80 Z"/>
+      <circle class="bubble" cx="193" cy="80" r="6"/>
+    `;
+    wires = `
+      <path class="wire" d="M28 80 H110"/>
+      <path class="wire" d="M199 80 H315"/>
+    `;
+    labels = `
+      <text class="wire-label" x="28" y="66">A = ${A}</text>
+      <text class="wire-label" x="270" y="67">Y</text>
+    `;
+    outputStart = 199;
+  } else {
+    wires = `
+      <path class="wire" d="M28 55 H105"/>
+      <path class="wire" d="M28 105 H105"/>
+    `;
+    labels = `
+      <text class="wire-label" x="28" y="44">A = ${A}</text>
+      <text class="wire-label" x="28" y="124">B = ${B}</text>
+      <text class="wire-label" x="270" y="67">Y</text>
+    `;
+
+    if (gate === "AND" || gate === "NAND") {
+      shape = `<path class="gate-shape" d="M105 35 H145 A45 45 0 0 1 145 125 H105 Z"/>`;
+      if (gate === "NAND") {
+        shape += `<circle class="bubble" cx="202" cy="80" r="6"/>`;
+        outputStart = 208;
+      } else {
+        outputStart = 190;
+      }
+    } else {
+      shape = `<path class="gate-shape" d="M105 35 Q130 80 105 125 Q163 125 200 80 Q163 35 105 35 Z"/>`;
+      if (gate === "XOR" || gate === "XNOR") {
+        shape += `<path class="gate-shape" d="M95 35 Q120 80 95 125" fill="none"/>`;
+      }
+      if (gate === "NOR" || gate === "XNOR") {
+        shape += `<circle class="bubble" cx="207" cy="80" r="6"/>`;
+        outputStart = 213;
+      } else {
+        outputStart = 200;
+      }
+    }
+
+    wires += `<path class="wire" d="M${outputStart} 80 H315"/>`;
+  }
+
+  circuitDiagram.innerHTML = `
+    ${wires}
+    ${shape}
+    ${labels}
+    <circle cx="315" cy="80" r="13" fill="${output ? "#16a34a" : "#94a3b8"}"/>
+    <text class="output-number" x="315" y="85">${output}</text>
+  `;
+}
+
+function renderTruthTable(gate) {
+  truthTable.innerHTML = "";
+
+  const combinations = gate === "NOT"
+    ? [[0, 0], [1, 0]]
+    : [[0, 0], [0, 1], [1, 0], [1, 1]];
+
+  combinations.forEach(([a, b]) => {
+    const y = calculateOutput(gate, a, b);
+    const row = document.createElement("tr");
+
+    if (a === A && (gate === "NOT" || b === B)) {
+      row.classList.add("current-row");
+    }
+
+    [a, gate === "NOT" ? "—" : b, y].forEach(value => {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.appendChild(cell);
+    });
+
+    truthTable.appendChild(row);
+  });
+}
+
+function updateSimulator() {
+  const gate = gateSelect.value;
+  const y = calculateOutput(gate, A, B);
+  const info = gates[gate];
+
+  valueA.textContent = A;
+  valueB.textContent = gate === "NOT" ? "—" : B;
+
+  toggleA.textContent = `Set A = ${1 - A}`;
+  toggleB.textContent = `Set B = ${1 - B}`;
+
+  inputBCard.hidden = gate === "NOT";
+  toggleB.disabled = gate === "NOT";
+
+  gateTitle.textContent = `${gate} Gate`;
+  gateDescription.textContent = info.description;
+
+  booleanEquation.textContent = info.equation;
+  equationMeaning.textContent = info.description;
+
+  outputExpression.textContent = info.equation;
+  tableGate.textContent = `${gate} Gate`;
+
+  outputValue.textContent = y;
+  outputStatus.textContent = y === 1 ? "HIGH (1)" : "LOW (0)";
+  outputLight.classList.toggle("on", y === 1);
+
+  drawCircuit(gate, y);
+  renderTruthTable(gate);
+}
+
+toggleA.addEventListener("click", () => { A = 1 - A; updateSimulator(); });
+toggleB.addEventListener("click", () => { B = 1 - B; updateSimulator(); });
+gateSelect.addEventListener("change", updateSimulator);
+resetButton.addEventListener("click", () => { A = 0; B = 0; updateSimulator(); });
+
+updateSimulator();
+</script>
+</body>
+</html>
